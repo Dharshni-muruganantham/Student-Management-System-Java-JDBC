@@ -1,7 +1,7 @@
 import java.sql.*;
 import java.util.Scanner;
 
-public class StudentJDBC {
+public class StudentManagementSystem {
 
     public static void main(String[] args) {
 
@@ -10,24 +10,30 @@ public class StudentJDBC {
         try {
 
             Class.forName("com.mysql.cj.jdbc.Driver");
+
             Connection con = DriverManager.getConnection(
                 "jdbc:mysql://localhost:3306/studentdb",
                 "root",
                 "root"
             );
-            System.out.println("Enter ID:");
+
+            System.out.println("Connected Successfully");
+
+            System.out.println("Enter Student ID:");
             int id = sc.nextInt();
             sc.nextLine();
 
-            System.out.println("Enter Name:");
+            System.out.println("Enter Student Name:");
             String name = sc.nextLine();
 
             System.out.println("Enter Department:");
             String dept = sc.nextLine();
 
-            String query = "insert into students values(?,?,?)";
+            String insertQuery =
+            "insert into students values(?,?,?)";
 
-            PreparedStatement ps = con.prepareStatement(query);
+            PreparedStatement ps =
+            con.prepareStatement(insertQuery);
 
             ps.setInt(1, id);
             ps.setString(2, name);
@@ -35,11 +41,30 @@ public class StudentJDBC {
 
             ps.executeUpdate();
 
-            System.out.println("Data Inserted Successfully");
+            System.out.println("Student Added Successfully");
+
+            String selectQuery =
+            "select * from students";
+            Statement st = con.createStatement();
+
+            ResultSet rs = st.executeQuery(selectQuery);
+
+            System.out.println("\nSTUDENT RECORDS");
+            System.out.println("------------------------");
+
+            while(rs.next()) {
+
+                System.out.println(
+                    rs.getInt("id") + "  " +
+                    rs.getString("name") + "  " +
+                    rs.getString("department")
+                );
+            }
 
             con.close();
 
         } catch(Exception e) {
+
             System.out.println(e);
         }
     }
