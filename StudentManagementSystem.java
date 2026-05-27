@@ -43,23 +43,73 @@ public class StudentManagementSystem {
 
             System.out.println("Student Added Successfully");
 
+System.out.println("\nEnter Student ID to Update:");
+int updateId = sc.nextInt();
+sc.nextLine();
+
+System.out.println("Enter New Department:");
+String newDept = sc.nextLine();
+
+String updateQuery =
+"update students set department=? where id=?";
+
+PreparedStatement ups =
+con.prepareStatement(updateQuery);
+
+ups.setString(1, newDept);
+ups.setInt(2, updateId);
+
+int rows = ups.executeUpdate();
+
+if(rows > 0) {
+
+    System.out.println("Student Updated Successfully");
+
+} else {
+
+    System.out.println("Student ID Not Found");
+}
+
+System.out.println("\nEnter Student ID to Delete:");
+int deleteId = sc.nextInt();
+
+String deleteQuery =
+"delete from students where id=?";
+
+PreparedStatement dps =
+con.prepareStatement(deleteQuery);
+
+dps.setInt(1, deleteId);
+
+int deletedRows = dps.executeUpdate();
+
+if(deletedRows > 0) {
+
+    System.out.println("Student Deleted Successfully");
+
+} else {
+
+    System.out.println("Student ID Not Found");
+}
+
             String selectQuery =
-            "select * from students";
-            Statement st = con.createStatement();
+"select * from students";
 
-            ResultSet rs = st.executeQuery(selectQuery);
+Statement st = con.createStatement();
 
-            System.out.println("\nSTUDENT RECORDS");
-            System.out.println("------------------------");
+ResultSet rs = st.executeQuery(selectQuery);
 
-            while(rs.next()) {
+System.out.println("\nSTUDENT RECORDS");
+System.out.println("------------------------");
 
-                System.out.println(
-                    rs.getInt("id") + "  " +
-                    rs.getString("name") + "  " +
-                    rs.getString("department")
-                );
-            }
+while(rs.next()) {
+
+    System.out.println(
+        rs.getInt("id") + "  " +
+        rs.getString("name") + "  " +
+        rs.getString("department")
+    );
+}
 
             con.close();
 
