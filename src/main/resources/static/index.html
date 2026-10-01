@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Management System</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#f4f6fa;margin:0;color:#1f2937}
+  header{background:#1e3a8a;color:#fff;padding:16px 24px;font-size:20px;font-weight:600}
+  main{max-width:900px;margin:24px auto;padding:0 16px}
+  .card{background:#fff;border-radius:10px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+  form,.bar{display:flex;gap:8px;flex-wrap:wrap}
+  input,select{padding:8px;border:1px solid #cbd5e1;border-radius:6px;flex:1;min-width:140px}
+  button{padding:8px 14px;border:0;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer}
+  button.del{background:#dc2626} button.alt{background:#64748b}
+  table{width:100%;border-collapse:collapse} th,td{text-align:left;padding:8px;border-bottom:1px solid #e5e7eb}
+  #msg{color:#dc2626;margin:8px 0;min-height:18px}
+  .table-wrap{overflow-x:auto}
+</style>
+</head>
+<body>
+<header>🎓 Student Management System</header>
+<main>
+  <div class="card">
+    <form id="form">
+      <input type="hidden" id="id">
+      <input id="name" placeholder="Name" required>
+      <input id="email" type="email" placeholder="Email" required>
+      <input id="department" placeholder="Department" required>
+      <button id="save">Add Student</button>
+      <button type="button" class="alt" id="cancel" style="display:none">Cancel</button>
+    </form>
+    <div id="msg"></div>
+  </div>
+  <div class="card">
+    <div class="bar">
+      <input id="search" placeholder="Search by name or department">
+      <select id="sort">
+        <option value="id|asc">ID ↑</option><option value="id|desc">ID ↓</option>
+        <option value="name|asc">Name A-Z</option><option value="name|desc">Name Z-A</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+    <table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Department</th><th></th></tr></thead>
+    <tbody id="rows"></tbody></table></div>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let students = [];
+
+async function api(url, opts) {
+  const r = await fetch(url, opts);
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || 'Request failed'); }
+  return r.status === 204 ? null : r.json();
+}
+
+async function load() {
+  const [sortBy, dir] = $('sort').value.split('|');
+  const q = new URLSearchParams({search: $('search').value, sortBy, dir});
+  try {
+    students = await api('/api/students?' + q);
+    $('rows').innerHTML = students.map(s => `<tr>
+      <td>${s.id}</td><td>${esc(s.name)}</td><td>${esc(s.email)}</td><td>${esc(s.department)}</td>
+      <td><button onclick="edit(${s.id})">Edit</button> <button class="del" onclick="removeStudent(${s.id})">Delete</button></td></tr>`).join('')
+      || '<tr><td colspan="5">No students found</td></tr>';
+  } catch (e) { $('msg').textContent = e.message; }
+}
+
+function edit(id) {
+  const s = students.find(x => x.id === id);
+  $('id').value = s.id; $('name').value = s.name; $('email').value = s.email; $('department').value = s.department;
+  $('save').textContent = 'Update Student'; $('cancel').style.display = '';
+}
+function reset() {
+  $('form').reset(); $('id').value = ''; $('save').textContent = 'Add Student'; $('cancel').style.display = 'none';
+}
+async function removeStudent(id) {
+  if (!confirm('Delete this student?')) return;
+  try { await api('/api/students/' + id, {method: 'DELETE'}); load(); } catch (e) { $('msg').textContent = e.message; }
+}
+
+$('form').addEventListener('submit', async ev => {
+  ev.preventDefault(); $('msg').textContent = '';
+  const id = $('id').value;
+  const body = JSON.stringify({name: $('name').value, email: $('email').value, department: $('department').value});
+  try {
+    await api('/api/students' + (id ? '/' + id : ''), {method: id ? 'PUT' : 'POST', headers: {'Content-Type': 'application/json'}, body});
+    reset(); load();
+  } catch (e) { $('msg').textContent = e.message; }
+});
+$('cancel').onclick = reset;
+$('search').oninput = load;
+$('sort').onchange = load;
+load();
+</script>
+</body>
+</html>
